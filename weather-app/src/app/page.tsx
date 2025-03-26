@@ -1,61 +1,56 @@
 'use client';
-import { useState, useEffect } from 'react';
-import SearchBar from '../components/SearchBar';
-import WeatherDisplay from '../components/WeatherDisplay';
-import { WeatherData } from '../components/WeatherDisplay';
+import { useState } from "react";
+import { Navbar, DisplayWeather, Spinner } from "@/components";
+import { WeatherData, WeatherState } from "@/lib/types";
+import { fetchWeather } from "@/lib/services";
 
 export default function Home() {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [error, setError] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const fetchWeather = async (city: string) => {
-    setIsLoading(true);
-    setError('');
+  const [weatherState, setWeatherState] = useState<WeatherState>({
+    data: null,
+    error: null,
+    isLoading: false,
+  });
+  
+  const handleSearch = async (city: string) => {
+    setWeatherState(prev => ({ ...prev, isLoading: true, error: null }));
+    
     try {
-      const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'City not found');
-      }
-
-      const data = await response.json();
-      setWeatherData(data);
+      const data = await fetchWeather(city);
+      setWeatherState({
+        data,
+        error: null,
+        isLoading: false,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch weather data');
-      setWeatherData(null);
-    } finally {
-      setIsLoading(false);
+      setWeatherState({
+        data: null,
+        error: err instanceof Error ? err.message : 'An error occurred',
+        isLoading: false,
+      });
     }
   };
-
+  
   return (
-    <main className="min-h-screen p-8 bg-gray-100">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-center text-gray-800">SPweather</h1>
-        
-        {/* Search Bar Section - Always Visible */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <SearchBar onSearch={fetchWeather} />
-          {isLoading && <p className="mt-4 text-blue-500">Loading...</p>}
-        </div>
-
-        {/* Error/Results Section */}
-        <div className="space-y-6">
-          {error && (
-            <div className="p-4 bg-red-100 text-red-700 rounded-lg">
-              Error: {error}
+    <div className="flex flex-col gap-4 bg-gray-100 min-h-screen"> 
+      <Navbar onSearch={handleSearch} isLoading={weatherState.isLoading} />
+      
+      <main className="flex-1 container mx-auto px-4 py-4 md:py-8">
+        <div className="max-w-2xl mx-auto">        
+          {weatherState.isLoading && (
+            <div className="text-center p-4 text-blue-500">
+              <Spinner />
             </div>
           )}
 
-          {weatherData && (
-            <div className="animate-fade-in">
-              <WeatherDisplay data={weatherData} />
+          {weatherState.error && (
+            <div className="p-4 bg-red-100 text-red-700 rounded-lg text-sm md:text-base">
+              {weatherState.error}
             </div>
           )}
+          
+          {weatherState.data && <DisplayWeather data={weatherState.data} />}
         </div>
-      </div>
-    </main>
-  );
+      </main>
+    </div>
+  ); 
 }
