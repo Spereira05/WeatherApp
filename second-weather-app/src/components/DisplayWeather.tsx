@@ -32,6 +32,13 @@ export default function DisplayWeather({ data }: DisplayWeatherProps) {
   }, [data?.name, data?.sys?.country]);
   
   const toggleFavorite = async () => {
+    if (!session) { 
+      setMessage({
+        text: "Please sign in to add favorites"f,
+        type: "error"
+      });
+      return;
+    }
     try {
       if (isFavorite && favoriteId) {
         const response = await fetch(`/api/favorites?id=${favoriteId}`, {
@@ -46,6 +53,7 @@ export default function DisplayWeather({ data }: DisplayWeatherProps) {
         setFavoriteId(null);
         setMessage({ text: `${data.name} removed from favorites!`, type: 'success' });
       } else {
+        console.log("Adding to favorites:", { name: data.name, country: data.sys.country });
         const response = await fetch('/api/favorites', {
           method: 'POST',
           headers: {
@@ -55,8 +63,19 @@ export default function DisplayWeather({ data }: DisplayWeatherProps) {
         });
       
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to add to favorites');
+          const contentType = response.headers.get("content-type");
+          console.error("Error response:", {
+            status: response.status,
+            statusText: response.statusText,
+            contentType
+          }); 
+          let errorData;
+          if (contentType && contentType.includes("application/json")) {
+            errorData = await response.json();
+          } else {
+            errorData = { error: await response.text()};
+          }
+          
         }
         
         const result = await response.json();
@@ -78,7 +97,6 @@ export default function DisplayWeather({ data }: DisplayWeatherProps) {
       }, 3000);
     }
   };
-  
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       {message && (<div className={`mb-4 p-3 rounded ${

@@ -1,8 +1,7 @@
 'use client';
 import { TiWeatherWindyCloudy } from "react-icons/ti";
 import CitySearch from "./CitySearch";
-import { login } from "@/lib/actions/auth"
-import { useSession } from "next-auth/react";
+import { useSession, signOut, signIn } from "next-auth/react";
 
 type NavbarProps = {
   onSearch: (city: string) => Promise<void>;
@@ -39,7 +38,7 @@ export default function Navbar({ onSearch, isLoading }: NavbarProps) {
                     </div>
                   ) : (
                     <button
-                      onClick={() => login("google")}
+                      onClick={() => signIn("google")}
                       className="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors flex items-center gap-2"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24">

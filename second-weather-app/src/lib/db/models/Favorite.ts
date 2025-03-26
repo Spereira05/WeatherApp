@@ -1,11 +1,12 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
-interface IFavorite {
+interface IFavorite extends Document{
   name: string;
   country: string;
   addedAt: Date;
   notes?: string;
   lastChecked?: Date;
+  userId: string;
 }
 
 const favoriteSchema = new Schema<IFavorite>({
@@ -13,7 +14,6 @@ const favoriteSchema = new Schema<IFavorite>({
     type: String,
     required: [true, 'Please provide a city name'],
     trim: true,
-    unique: true
   },
   country: {
     type: String,
@@ -32,7 +32,12 @@ const favoriteSchema = new Schema<IFavorite>({
     type: Date,
     default: Date.now,
   },
+  userId: {
+    type: String,
+    ref: 'User',
+    required: true
+  },
 });
 
-favoriteSchema.index({ name: 1, country: 1 }, { unique: true });
-export const Favorite = mongoose.models.Favorite || mongoose.model<IFavorite>('Favorite', favoriteSchema);
+favoriteSchema.index({ name: 1, country: 1, userId: 1 }, { unique: true });
+export const Favorite = (mongoose.models.Favorite as mongoose.Model<IFavorite>) || mongoose.model<IFavorite>('Favorite', favoriteSchema);

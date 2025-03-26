@@ -60,15 +60,27 @@ export function FavoritesList() {
       setError(err instanceof Error ? err.message : 'Failed to delete favorite');
     }
   };
+  
 
-  function checkFavorites = () => {
-    
+  if (isLoading)   
+    return (
+      <div className="p-8 flex justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  if (error)   
+    return (
+      <div className="p-4 bg-red-100 text-red-700 rounded-lg">
+        Error: {error}
+      </div>
+    );
+  if (favorites.length === 0) {
+    return (
+      <div className="p-8 text-center text-gray-500">
+        No favorite cities yet. Add some by searching for a city!
+      </div>
+    )
   }
-  
-  
-
-  if (isLoading) return <div>Loading favorites...</div>;
-  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="space-y-4">
