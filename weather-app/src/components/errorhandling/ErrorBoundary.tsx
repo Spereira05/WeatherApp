@@ -1,6 +1,7 @@
 'use client';
-
 import { useState } from 'react';
+
+//Component to catch and display errors that error during rendering
 
 export default function ErrorBoundary({
   children
@@ -16,7 +17,7 @@ export default function ErrorBoundary({
           Something went wrong
         </h2>
         <p className="text-red-600 mb-4">
-          We're sorry, but there was an error loading this page.
+          We&apos;re sorry, but there was an error loading this page.
         </p>
         <button
           onClick={() => {

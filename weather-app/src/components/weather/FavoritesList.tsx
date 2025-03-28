@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react';
 import { FavoriteCity } from '@/lib/types/favorites';
 
+interface FavoritesListProps {
+  onCityClick?: (city: string, country: string) => void;
+}
 
-export default function FavoritesList() {
+export default function FavoritesList({ onCityClick }: FavoritesListProps) {
   const [favorites, setFavorites] = useState<FavoriteCity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,18 +34,22 @@ export default function FavoritesList() {
 
   const updateFavorite = async (id: string, updates: Partial<FavoriteCity>) => {
     try {
+      console.log("Updating favorite with ID:", id, "Updates:", updates);
+      
+      const favoriteId = favorites.find(f => f.id === id)?._id || id;
+      
       const response = await fetch('/api/favorites', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...updates }),
+        body: JSON.stringify({ id: favoriteId, ...updates }),
       });
 
       if (!response.ok) throw new Error('Failed to update favorite');
-      const updated = await response.json();
       setFavorites(prev => 
-        prev.map(fav => fav.id === id ? updated : fav)
+        prev.map(fav => fav.id === id ? {...fav, ...updates} : fav)
       );
       setEditingId(null);
+      window.location.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update favorite');
     }
@@ -61,7 +68,6 @@ export default function FavoritesList() {
     }
   };
   
-
   if (isLoading)   
     return (
       <div className="p-8 flex justify-center">
@@ -87,66 +93,70 @@ export default function FavoritesList() {
       <h2 className="text-xl md:text-2xl font-bold">Favorite Cities</h2>
       
       <div className="grid gap-4">
-        {favorites.map(favorite => (
-          <div
-            key={favorite.id}
-            className="p-3 md:p-4 bg-white rounded-lg shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-2"
-          >
-            <div className="w-full md:w-auto">
-              <h3 className="font-semibold">{favorite.name}</h3>
-              {editingId === favorite.id ? (
-                <input
-                  type="text"
-                  value={noteInput}
-                  onChange={(e) => setNoteInput(e.target.value)}
-                  className="border rounded px-2 py-1 mt-1 w-full md:w-auto"
-                  placeholder="Add a note..."
-                />
+        {favorites.map(favorite => {
+          // Create a unique identifier for this favorite
+          const favoriteUniqueId = favorite._id || favorite.id;
+          
+          // Check if this specific favorite is being edited
+          const isEditing = editingId === favoriteUniqueId;
+          
+          return (
+            <div
+              key={favoriteUniqueId}
+              className="p-3 md:p-4 bg-white rounded-lg shadow-sm border border-gray-100"
+            >
+              <div 
+                className={`${onCityClick ? 'cursor-pointer hover:bg-blue-50' : ''} p-2 mb-2 rounded`}
+                onClick={() => onCityClick && onCityClick(favorite.name, favorite.country || '')}
+              >
+                <h3 className="font-semibold text-gray-800">{favorite.name}</h3>
+                {!isEditing && (
+                  <p className="text-sm text-gray-600">{favorite.notes}</p>
+                )}
+              </div>
+              
+              {isEditing ? (
+                // Editing mode for this specific favorite
+                <div className="w-full">
+                  <input
+                    type="text"
+                    value={noteInput}
+                    onChange={(e) => setNoteInput(e.target.value)}
+                    className="border rounded px-2 py-1 mt-1 w-full"
+                    placeholder="Add a note..."
+                  />
+                  <div className="flex gap-2 mt-2 justify-end">
+                    <button
+                      onClick={() => updateFavorite(favoriteUniqueId, { notes: noteInput })}
+                      className="text-green-600 hover:text-green-800"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               ) : (
-                <p className="text-sm text-gray-600">{favorite.notes}</p>
-              )}
-            </div>
-            
-            <div className="flex gap-2 w-full md:w-auto justify-end">
-              {editingId === favorite.id ? (
-                <>
+                // View mode
+                <div className="flex gap-2 w-full justify-end">
                   <button
                     onClick={() => {
-                      updateFavorite(favorite.id, { notes: noteInput });
-                    }}
-                    className="text-green-600 hover:text-green-800"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="text-gray-600 hover:text-gray-800"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      setEditingId(favorite.id);
+                      setEditingId(favoriteUniqueId);
                       setNoteInput(favorite.notes || '');
                     }}
                     className="text-blue-600 hover:text-blue-800"
                   >
                     Edit
                   </button>
-                  <button
-                    onClick={() => deleteFavorite(favorite.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    Delete
-                  </button>
-                </>
+                </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -5,27 +5,24 @@ import { useState, useEffect } from "react";
 import { WeatherData } from "@/lib/types";
 
 interface DisplayWeatherProps {
-  data: WeatherData
+  data: WeatherData | { data: WeatherData }
 }
   
 export default function DisplayWeather({ data }: DisplayWeatherProps) {
-  
-  useEffect(() => {
-    console.log("Weather data received", JSON.stringify(data, null, 2));
-  }, [data]);
-  const weatherData = data.data || data;
+
+  const weatherData = 'data' in data ? data.data : data;
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const { data: session } = useSession();
-    
+
   const checkFavoriteStatus = async () => {
     if (!weatherData.name || !weatherData.sys?.country) { 
       console.error("Missing required weather data properties:", weatherData);
       return { isFavorite: false, favoriteId: null };
     }
     try {
-      const response = await fetch(`/api/favorites?city=${encodeURIComponent(data.name)}&country=${data.sys.country}`);
+      const response = await fetch(`/api/favorites?city=${encodeURIComponent(weatherData.name)}&country=${weatherData.sys.country}`);
       const result = await response.json();
       setIsFavorite(result.isFavorite);
       setFavoriteId(result.favoriteId);
@@ -35,18 +32,14 @@ export default function DisplayWeather({ data }: DisplayWeatherProps) {
       return { isFavorite: false, favoriteId: null };
     }
   };
-  
+
   useEffect(() => {
-    console.log("Data received:", weatherData);
-    console.log("data?.sys:", weatherData?.sys);
-    console.log("data?.sys?.country:", weatherData?.sys?.country);
-    
     if (weatherData?.name && weatherData?.sys?.country) {
       checkFavoriteStatus();
     }       
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weatherData?.name, weatherData?.sys?.country]);
-  
+
   const toggleFavorite = async () => {
     if (!session) { 
       setMessage({
@@ -60,49 +53,54 @@ export default function DisplayWeather({ data }: DisplayWeatherProps) {
         const response = await fetch(`/api/favorites?id=${favoriteId}`, {
           method: 'DELETE',
         });
-        
+
         if (!response.ok) {
           throw new Error('Failed to remove from favorites');
         }
-        
+
         setIsFavorite(false);
         setFavoriteId(null);
-        setMessage({ text: `${data.name} removed from favorites!`, type: 'success' });
+        setMessage({ text: `${weatherData.name} removed from favorites!`, type: 'success' });
       } else {
-        console.log("Adding to favorites:", { name: data.name, country: data.sys.country });
+        console.log("Adding to favorites:", { name: weatherData.name, country: weatherData.sys.country });
         const response = await fetch('/api/favorites', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ name: data.name, country: data.sys.country }),
+          body: JSON.stringify({ name: weatherData.name, country: weatherData.sys.country }),
         });
-      
+
         if (!response.ok) {
-          const contentType = response.headers.get("content-type");
-          console.error("Error response:", {
-            status: response.status,
-            statusText: response.statusText,
-            contentType
-          }); 
-          let errorData;
-          if (contentType && contentType.includes("application/json")) {
-            errorData = await response.json();
-          } else {
-            errorData = { error: await response.text()};
+          let errorMsg = 'Failed to add to favorites';
+          
+          try {
+            // Try to parse the error response as JSON
+            const errorData = await response.json();
+            errorMsg = errorData.error || errorMsg;
+          } catch (parseError) {
+            // If parsing fails, try to get text
+            try {
+              errorMsg = await response.text();
+            } catch (textError) {
+              // If all fails, use the default error message
+              console.error("Could not parse error response", textError);
+            }
           }
           
+          throw new Error(errorMsg);
         }
-        
+
         const result = await response.json();
         setFavoriteId(result._id);
         setIsFavorite(true);
         setMessage({
-          text: `${data.name} added to favorites`,
+          text: `${weatherData.name} added to favorites`,
           type: 'success'
         });
       }
     } catch (err) {
+      console.error('Error toggling favorite:', err);
       setMessage({
         text: err instanceof Error ? err.message : 'Failed to update favorites',
         type: 'error'
@@ -113,20 +111,7 @@ export default function DisplayWeather({ data }: DisplayWeatherProps) {
       }, 3000);
     }
   };
-  if (!weatherData || !weatherData.sys) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <p className="text-center text-gray-500">Loading weather details...</p>
-        <div className="mt-4 p-4 bg-gray-100 rounded">
-          <h3 className="font-semibold mb-2">Raw Data:</h3>
-          <pre className="text-xs overflow-auto max-h-40">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        </div>
-      </div>
-    );
-  }
-  
+
   return (
     <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
       {message && (
@@ -138,8 +123,8 @@ export default function DisplayWeather({ data }: DisplayWeatherProps) {
       )}
       <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-3">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-gray-800 text-center md:text-left">{data.name}</h2>
-          <p className="text-sm text-gray-600 text-center md:text-left">{data.sys.country}</p>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 text-center md:text-left">{weatherData.name}</h2>
+          <p className="text-sm text-gray-600 text-center md:text-left">{weatherData.sys.country}</p>
         </div>        
         <button
           onClick={toggleFavorite}
@@ -152,23 +137,23 @@ export default function DisplayWeather({ data }: DisplayWeatherProps) {
           {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
         </button>
       </div>
-        
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">  
         <div className="p-4 bg-gray-50 rounded-lg text-center md:text-left">
           <p className="text-4xl md:text-5xl font-bold text-gray-800">
-            {Math.round(data.main.temp)}°C
+            {Math.round(weatherData.main.temp)}°C
           </p>
-          <p className="text-gray-600 mt-1">{data.weather[0].description}</p>
+          <p className="text-gray-600 mt-1">{weatherData.weather[0].description}</p>
         </div>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
           <div className="p-3 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">Humidity</p>
-            <p className="text-xl font-semibold text-gray-300">{data.main.humidity}%</p>
+            <p className="text-xl font-semibold text-gray-300">{weatherData.main.humidity}%</p>
           </div>
           <div className="p-3 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">Wind Speed</p>
-            <p className="text-xl font-semibold text-gray-300">{data.wind.speed} m/s</p>
+            <p className="text-xl font-semibold text-gray-300">{weatherData.wind.speed} m/s</p>
           </div>
         </div>
       </div>

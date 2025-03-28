@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// API endpoint to search for cities using OpenWeatherMap's geocoding API
+// @param request - The HTTP request object containing search query
+// @returns JSON response with matching cities
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
@@ -41,8 +45,6 @@ export async function GET(request: Request) {
       name: city.name,
       country: city.country,
       state: city.state, // Include state/province if needed
-      lat: city.lat,
-      lon: city.lon
     }));
     
     return NextResponse.json(cities);

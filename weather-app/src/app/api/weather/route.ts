@@ -1,5 +1,8 @@
-import { WeatherData, WeatherError } from "@/lib/types/weather";
+import { WeatherData } from "@/lib/types/weather";
 import { successResponse, errorResponse } from "@/lib/utils/apiResponse";
+
+// GET handler for weather data
+// Fetches weather information for a specific city from OpenWeatherMap API
 
 
 export async function GET(request: Request) {
@@ -16,6 +19,7 @@ export async function GET(request: Request) {
     }
     
     let url;
+    // Handle city with country code format
     if (cityQuery.includes(',')) {
       const [city, country] = cityQuery.split(',');
       url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)},${country}&units=metric&appid=${apiKey}`;

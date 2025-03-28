@@ -54,7 +54,7 @@ export default function CitySearch({onSelectCity, isLoading}: CitySearchProps) {
   };
 
   return (
-    <div className="w-full max-w-full md:max-w-md">
+    <div className="w-full max-w-full md:max-w-md relative">
       <form onSubmit={searchCities} className="flex gap-2">
         <input
           type="text"
@@ -75,10 +75,20 @@ export default function CitySearch({onSelectCity, isLoading}: CitySearchProps) {
         </button>
       </form>
       
-      {/* Options display */}
+      {/* Display city options */}
       {cityOptions.length > 1 && (
         <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg">
-          {/* ... existing code */}
+          <ul>
+            {cityOptions.map((city) => (
+              <li 
+                key={city.id}
+                className="p-3 border-b hover:bg-blue-50 cursor-pointer text-gray-700"
+                onClick={() => handleCitySelect(`${city.name},${city.country}`)}
+              >
+                {city.name}, {city.country} {city.state ? `(${city.state})` : ''}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

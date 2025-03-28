@@ -14,7 +14,7 @@ console.log("Google Client Secret exists:", !!process.env.GOOGLE_CLIENT_SECRET);
 let adapter;
 try {
   adapter = MongoDBAdapter(clientPromise, {
-    databaseName: "weatherapp1"
+    databaseName: "weatherapp"
   });
   console.log("MongoDB adapter created successfully");
 } catch (error) {
@@ -35,23 +35,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
-    session: async ({ session, user }) => {
-      if (session?.user && user?.id) {
-        session.user.id = user.id;
+    session: async ({ token, session, user }) => {
+      console.log("Session callback - token:", token);
+      console.log("Session callback - user:", user);
+      
+      if (session?.user) {
+        session.user.id = token?.id || user?.id;
+        console.log("Updated session with user ID:", session.user.id);
       }
       return session;
     },
     jwt: async ({ token, user }) => {
-      if (user) {
+      console.log("JWT callback - user:", user);
+      
+      if (user?.id) {
         token.id = user.id;
+        console.log("Updated token with user ID:", token.id);
       }
       return token;
     },
   },
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env.NODE_ENV === 'development' && false,
   logger: {
-    error(code, metadata) {
-      console.error(`NextAuth Error [${code}]:`, metadata);
+    error(error) {
+      console.error(`NextAuth Error:`, error);
     },
     warn(code) {
       console.warn(`NextAuth Warning [${code}]`);
