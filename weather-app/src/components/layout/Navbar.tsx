@@ -44,7 +44,7 @@ export default function Navbar({ onSearch, isLoading, onReset }: NavbarProps) {
                 <span className="text-sm text-gray-600">Hi, {session.user?.name?.split(' ')[0]}</span>
                 <button
                   onClick={() => signOut()}
-                  className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm bg-blue-400 hover:bg-gray-300 rounded-lg transition-colors"
                 >
                   Sign Out
                 </button>

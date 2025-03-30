@@ -6,8 +6,6 @@ import { auth } from '@/auth'
 export interface FavoriteCity {
   id: string;
   name: string;
-  addedAt: string;
-  lastChecked?: string;
   notes?: string;
 }
 
@@ -149,7 +147,6 @@ export async function PUT(request: Request) {
     }
     
     const body = await request.json();
-    console.log("PUT request body:", body); // Add this for debugging
     
     const { id, ...updates } = body;
 
@@ -168,7 +165,6 @@ export async function PUT(request: Request) {
 
     console.log("Finding and updating favorite:", { id, userId: session.user.id, updates });
     
-
     // Update favorite while ensuring it belongs to the current user
     const favorite = await Favorite.findOneAndUpdate(
       { _id: id, userId: session.user.id },

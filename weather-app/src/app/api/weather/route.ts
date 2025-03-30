@@ -27,8 +27,7 @@ export async function GET(request: Request) {
       url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityQuery)}&units=metric&appid=${apiKey}`;
       }
     try {
-      const response = await fetch(url, {next: { revalidate: 300 } }
-      );
+      const response = await fetch(url, {next: { revalidate: 300 } });
       
       if (!response.ok) {
         const error = await response.json();

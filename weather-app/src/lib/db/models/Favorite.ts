@@ -5,7 +5,6 @@ interface IFavorite extends Document{
   country: string;
   addedAt: Date;
   notes?: string;
-  lastChecked?: Date;
   userId: string;
 }
 
@@ -27,10 +26,6 @@ const favoriteSchema = new Schema<IFavorite>({
   notes: {
     type: String,
     default: '',
-  },
-  lastChecked: {
-    type: Date,
-    default: Date.now,
   },
   userId: {
     type: String,

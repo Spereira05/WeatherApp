@@ -41,10 +41,10 @@ export async function GET(request: Request) {
     
     // Format the response to include only relevant fields
     const cities = data.map((city: any, index: number) => ({
-      id: index, // Assign a simple index as ID for the list
+      id: index,
       name: city.name,
       country: city.country,
-      state: city.state, // Include state/province if needed
+      state: city.state, 
     }));
     
     return NextResponse.json(cities);

@@ -90,7 +90,7 @@ export default function FavoritesList({ onCityClick }: FavoritesListProps) {
 
   return (
     <div className="space-y-4 p-2 md:p-0">
-      <h2 className="text-xl md:text-2xl font-bold">Favorite Cities</h2>
+      <h2 className="text-gray-800 text-xl md:text-2xl font-bold">Favorite Cities</h2>
       
       <div className="grid gap-4">
         {favorites.map(favorite => {
@@ -122,7 +122,7 @@ export default function FavoritesList({ onCityClick }: FavoritesListProps) {
                     type="text"
                     value={noteInput}
                     onChange={(e) => setNoteInput(e.target.value)}
-                    className="border rounded px-2 py-1 mt-1 w-full"
+                    className="border rounded px-2 py-1 mt-1 w-full text-gray-600"
                     placeholder="Add a note..."
                   />
                   <div className="flex gap-2 mt-2 justify-end">
